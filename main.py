@@ -125,6 +125,7 @@ joint_ids = [i for i in range(num_joints)]
 joints_max_limit = []
 joints_min_limit = []
 
+MAX_TORQUE_FORCE = 1_000
 OBSERVATION_SPACE_DIM = 100
 ACTION_SPACE_DIM = num_joints * 2
 print(f"""Robot num joints: {num_joints} | State space dim: {
@@ -318,17 +319,11 @@ def making_progress_towards_getting_up(past_position, new_position):
 rewards_data_plot = []
 
 
-def get_reward(past_position, new_position, epoch):
+def get_reward(past_position, new_position, forces_applied, epoch):
     timestep_reward = 0
 
-    # Get travelled distance
-    # distance_traveled = np.linalg.norm(
-    #     np.array(past_position[:2]) - np.array(new_position[:2])
-    # )*1e1
-
-    # timestep_reward += distance_traveled
-
-    # Calculate robot speed
+    force_penalty = 0 - (np.array(forces_applied)/MAX_TORQUE_FORCE).mean()
+    timestep_reward += force_penalty/2
 
     is_robot_on_ground_flag = is_robot_on_ground()
 
@@ -344,7 +339,7 @@ def get_reward(past_position, new_position, epoch):
     timestep_reward += robot_fell_penalty
     timestep_reward += robot_recovered_reward
 
-    robot_on_ground_continuous_penalty = -1 if is_robot_on_ground_flag else 1
+    robot_on_ground_continuous_penalty = -0.5 if is_robot_on_ground_flag else 1
 
     timestep_reward += robot_on_ground_continuous_penalty
 
@@ -359,9 +354,6 @@ def get_reward(past_position, new_position, epoch):
     if is_state_success():
         timestep_reward += 300
 
-    # relative_distance_from_target = get_distance_from_target_diff(
-        # past_position, new_position)
-
     relative_distance_from_target = 0
 
     if not is_robot_on_ground_flag:
@@ -372,7 +364,7 @@ def get_reward(past_position, new_position, epoch):
 
     if can_plot_rewards(epoch):
         rewards_data_plot.append({
-            # "distance_traveled": distance_traveled,
+            "force_penalty": force_penalty,
             "speed": speed,
             "robot_fell_penalty": robot_fell_penalty,
             "robot_recovered_reward": robot_recovered_reward,
@@ -423,7 +415,7 @@ for epoch in range(TOTAL_EPOCHS):
 
         rescaled_position_actions = rescale_actions(position_actions)
         rescaled_force_actions = [
-            ((force+1)/2)*1000 for force in force_actions]
+            ((force+1)/2)*MAX_TORQUE_FORCE for force in force_actions]
 
         # print("Rescaled position actions:")
         # for a in rescaled_position_actions:
@@ -453,7 +445,8 @@ for epoch in range(TOTAL_EPOCHS):
         new_position, _ = p.getBasePositionAndOrientation(robot_id)
 
         # Get timestep reward
-        reward = get_reward(position, new_position, epoch)
+        reward = get_reward(position, new_position,
+                            rescaled_force_actions, epoch)
 
         # Add reward to epoch accumulated score
         epoch_acc_score += reward
@@ -473,7 +466,7 @@ for epoch in range(TOTAL_EPOCHS):
         x = [i for i in range(len(rewards_data_plot))]
         plt.figure(figsize=(12, 8), dpi=200)
         plt.title(f"Rewards plot from epoch {epoch}")
-        # plt.plot(x, [data["distance_traveled"] for data in rewards_data_plot])
+        plt.plot(x, [data["force_penalty"] for data in rewards_data_plot])
         plt.plot(x, [data["speed"] for data in rewards_data_plot])
         plt.plot(x, [data["robot_fell_penalty"] for data in rewards_data_plot])
         plt.plot(x, [data["robot_recovered_reward"]
@@ -491,7 +484,7 @@ for epoch in range(TOTAL_EPOCHS):
         plt.plot(x, [data["total_reward"]
                      for data in rewards_data_plot], ".", color="black", markersize=0.5)
         plt.legend([
-            # "distance_traveled",
+            "torque_force_penalty",
             "speed", "robot_fell_penalty", "robot_recovered_reward",
             "robot_on_ground_continuous_penalty", "relative_distance_from_target", "making_progress_towards_getting_up",
             "foot_contact_readings",

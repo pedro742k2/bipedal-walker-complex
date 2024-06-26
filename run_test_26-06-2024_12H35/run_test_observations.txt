@@ -1,0 +1,1 @@
+Decreased on ground continuous penalty from -1 to -0.5

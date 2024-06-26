@@ -1,0 +1,1 @@
+penalty for torque force decreased by half
