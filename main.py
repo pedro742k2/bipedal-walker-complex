@@ -126,7 +126,7 @@ joints_max_limit = []
 joints_min_limit = []
 
 OBSERVATION_SPACE_DIM = 100
-ACTION_SPACE_DIM = num_joints
+ACTION_SPACE_DIM = num_joints * 2
 print(f"""Robot num joints: {num_joints} | State space dim: {
       OBSERVATION_SPACE_DIM} | Action space dim: {ACTION_SPACE_DIM}""")
 
@@ -145,7 +145,6 @@ for i in range(num_joints):
 
 
 # Create agent
-
 agent = Agent(start_steps=warmup, action_space_dims=ACTION_SPACE_DIM,
               state_space_dims=OBSERVATION_SPACE_DIM, actor_lr=actor_lr, critic_lr=critic_lr, batch_size=batch_size, gamma=gamma, max_action=MAX_ACTION_VALUE, min_action=MIN_ACTION_VALUE, max_replay_size=memory_size, tau=tau, alpha=0.2, runtest_folder_name=runtest_folder_name)
 
@@ -418,12 +417,28 @@ for epoch in range(TOTAL_EPOCHS):
 
         # Get actions | range: [-1, 1]
         actions = agent.select_actions(current_observation, add_noise)
-        rescaled_actions = rescale_actions(actions)
+
+        position_actions = actions[:10]
+        force_actions = actions[10:]
+
+        rescaled_position_actions = rescale_actions(position_actions)
+        rescaled_force_actions = [
+            ((force+1)/2)*1000 for force in force_actions]
+
+        # print("Rescaled position actions:")
+        # for a in rescaled_position_actions:
+        #     print(f"\t - {a}")
+
+        # print("Rescaled force actions:")
+        # for a in rescaled_force_actions:
+        #     print(f"\t - {a}")
+
+        # print("-."*50)
 
         # Apply actions
         for i in joint_ids:
             p.setJointMotorControl2(robot_id, i, controlMode=p.POSITION_CONTROL,
-                                    targetPosition=rescaled_actions[i], maxVelocity=100, force=700)
+                                    targetPosition=rescaled_position_actions[i], maxVelocity=100, force=rescaled_force_actions[i])
 
         # Perform actions in the environment
         p.stepSimulation()
