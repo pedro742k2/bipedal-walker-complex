@@ -6,6 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+FAILED*/
+*.log
+*.out
+*/plots/*
+*.zip
+
 # Distribution / packaging
 .Python
 build/
