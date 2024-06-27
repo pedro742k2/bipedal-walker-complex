@@ -126,7 +126,7 @@ joints_max_limit = []
 joints_min_limit = []
 
 MAX_TORQUE_FORCE = 1_000
-OBSERVATION_SPACE_DIM = 100
+OBSERVATION_SPACE_DIM = 101
 ACTION_SPACE_DIM = num_joints * 2
 print(f"""Robot num joints: {num_joints} | State space dim: {
       OBSERVATION_SPACE_DIM} | Action space dim: {ACTION_SPACE_DIM}""")
@@ -276,7 +276,10 @@ def get_current_observation():
     # Append contact sensors (binary array with two elements: feet touching the ground) (2 items)
     observation = np.append(observation, get_contact_sensor_values())
 
-    # Total of 100 elements
+    # Append robot fell state (1 item)
+    observation = np.append(observation, get_robot_fell_state())
+
+    # Total of 101 elements
     return observation
 
 
@@ -293,9 +296,18 @@ def update_last_ts_robot_on_ground_flag(flag: bool):
     last_ts_robot_on_ground_flag = flag
 
 
+def get_robot_fell_state():
+    return last_ts_robot_on_ground_flag
+
+
+def is_robot_up() -> bool:
+    (_, _, base_height), _ = p.getBasePositionAndOrientation(robot_id)
+    return base_height > 0.8
+
+
 def is_robot_on_ground() -> bool:
     (_, _, base_height), _ = p.getBasePositionAndOrientation(robot_id)
-    return base_height < 0.75
+    return base_height < 0.4
 
 
 def robot_fell():
@@ -303,7 +315,7 @@ def robot_fell():
 
 
 def recovered_from_fall():
-    return (last_ts_robot_on_ground_flag and not is_robot_on_ground())
+    return (last_ts_robot_on_ground_flag and not is_robot_up())
 
 
 def can_plot_rewards(current_epoch) -> bool:
@@ -313,7 +325,7 @@ def can_plot_rewards(current_epoch) -> bool:
 def making_progress_towards_getting_up(past_position, new_position):
     past_height = past_position[2]
     new_height = new_position[2]
-    return new_height - past_height > 0.03
+    return new_height - past_height > 0.01
 
 
 rewards_data_plot = []
@@ -322,30 +334,36 @@ rewards_data_plot = []
 def get_reward(past_position, new_position, forces_applied, epoch):
     timestep_reward = 0
 
+    if is_robot_up():
+        update_last_ts_robot_on_ground_flag(False)
+    elif is_robot_on_ground():
+        update_last_ts_robot_on_ground_flag(True)
+    # Else doesnt update
+
+    global_robot_fell_state = get_robot_fell_state()
+
     force_penalty = 0 - (np.array(forces_applied)/MAX_TORQUE_FORCE).mean()
     timestep_reward += force_penalty
 
-    is_robot_on_ground_flag = is_robot_on_ground()
-
     (x_speed, y_speed, _), _ = p.getBaseVelocity(robot_id)
     speed = 0
-    if not is_robot_on_ground_flag:
+    if not global_robot_fell_state:
         speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
     timestep_reward += speed
 
     robot_fell_penalty = -15 if robot_fell() else 0
-    robot_recovered_reward = 15 if recovered_from_fall() else 0
+    robot_recovered_reward = 20 if recovered_from_fall() else 0
 
     timestep_reward += robot_fell_penalty
     timestep_reward += robot_recovered_reward
 
-    robot_on_ground_continuous_penalty = -0.5 if is_robot_on_ground_flag else 0.5
+    robot_on_ground_continuous_penalty = -0.5 if global_robot_fell_state else 0.5
 
     timestep_reward += robot_on_ground_continuous_penalty
 
     making_progress_from_fall = 0
 
-    if is_robot_on_ground_flag and making_progress_towards_getting_up(past_position, new_position):
+    if global_robot_fell_state and making_progress_towards_getting_up(past_position, new_position):
         making_progress_from_fall = 5  # Reward for partial progress at getting up\
 
     timestep_reward += making_progress_from_fall
@@ -354,8 +372,8 @@ def get_reward(past_position, new_position, forces_applied, epoch):
 
     foot_contact_readings = get_contact_sensor_values()
     # If both feet touching the ground, receive a reward
-    if not is_robot_on_ground_flag and foot_contact_readings[0] and foot_contact_readings[1]:
-        both_feet_touching_ground_reward = 1
+    if not global_robot_fell_state and foot_contact_readings[0] and foot_contact_readings[1]:
+        both_feet_touching_ground_reward = 0.5
 
     timestep_reward += both_feet_touching_ground_reward
 
@@ -364,7 +382,7 @@ def get_reward(past_position, new_position, forces_applied, epoch):
 
     relative_distance_from_target = 0
 
-    if not is_robot_on_ground_flag:
+    if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
             past_position, new_position) * 1e2
 
@@ -383,8 +401,6 @@ def get_reward(past_position, new_position, forces_applied, epoch):
             "success_reward": 300 if is_state_success() else 0,
             "total_reward": timestep_reward
         })
-
-    update_last_ts_robot_on_ground_flag(is_robot_on_ground_flag)
 
     return timestep_reward
 
