@@ -313,7 +313,7 @@ def can_plot_rewards(current_epoch) -> bool:
 def making_progress_towards_getting_up(past_position, new_position):
     past_height = past_position[2]
     new_height = new_position[2]
-    return new_height - past_height > 0.02
+    return new_height - past_height > 0.03
 
 
 rewards_data_plot = []
@@ -323,14 +323,14 @@ def get_reward(past_position, new_position, forces_applied, epoch):
     timestep_reward = 0
 
     force_penalty = 0 - (np.array(forces_applied)/MAX_TORQUE_FORCE).mean()
-    timestep_reward += force_penalty/2
+    timestep_reward += force_penalty
 
     is_robot_on_ground_flag = is_robot_on_ground()
 
     (x_speed, y_speed, _), _ = p.getBaseVelocity(robot_id)
-    speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
-    if is_robot_on_ground_flag:
-        speed = speed * 1e-1
+    speed = 0
+    if not is_robot_on_ground_flag:
+        speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
     timestep_reward += speed
 
     robot_fell_penalty = -15 if robot_fell() else 0
@@ -339,17 +339,25 @@ def get_reward(past_position, new_position, forces_applied, epoch):
     timestep_reward += robot_fell_penalty
     timestep_reward += robot_recovered_reward
 
-    robot_on_ground_continuous_penalty = -0.5 if is_robot_on_ground_flag else 1
+    robot_on_ground_continuous_penalty = -0.5 if is_robot_on_ground_flag else 0.5
 
     timestep_reward += robot_on_ground_continuous_penalty
 
+    making_progress_from_fall = 0
+
     if is_robot_on_ground_flag and making_progress_towards_getting_up(past_position, new_position):
-        timestep_reward += 5  # Reward for partial progress at getting up
+        making_progress_from_fall = 5  # Reward for partial progress at getting up\
+
+    timestep_reward += making_progress_from_fall
+
+    both_feet_touching_ground_reward = 0
 
     foot_contact_readings = get_contact_sensor_values()
     # If both feet touching the ground, receive a reward
     if not is_robot_on_ground_flag and foot_contact_readings[0] and foot_contact_readings[1]:
-        timestep_reward += 1
+        both_feet_touching_ground_reward = 1
+
+    timestep_reward += both_feet_touching_ground_reward
 
     if is_state_success():
         timestep_reward += 300
@@ -370,8 +378,8 @@ def get_reward(past_position, new_position, forces_applied, epoch):
             "robot_recovered_reward": robot_recovered_reward,
             "robot_on_ground_continuous_penalty": robot_on_ground_continuous_penalty,
             "relative_distance_from_target": relative_distance_from_target,
-            "making_progress_towards_getting_up": 5 if is_robot_on_ground_flag and making_progress_towards_getting_up(past_position, new_position) else 0,
-            "foot_contact_readings": 1 if not is_robot_on_ground_flag and foot_contact_readings[0] and foot_contact_readings[1] else 0,
+            "making_progress_towards_getting_up": making_progress_from_fall,
+            "foot_contact_readings": both_feet_touching_ground_reward,
             "success_reward": 300 if is_state_success() else 0,
             "total_reward": timestep_reward
         })
@@ -404,8 +412,6 @@ for epoch in range(TOTAL_EPOCHS):
 
         # Decide whether or not to add noise
         add_noise = False
-        if algorithm == "td3":
-            add_noise = True
 
         # Get actions | range: [-1, 1]
         actions = agent.select_actions(current_observation, add_noise)
