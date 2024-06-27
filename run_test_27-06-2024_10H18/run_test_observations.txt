@@ -1,0 +1,1 @@
+new reward function and added robot fell state to state representation

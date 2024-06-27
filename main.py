@@ -315,7 +315,7 @@ def robot_fell():
 
 
 def recovered_from_fall():
-    return (last_ts_robot_on_ground_flag and not is_robot_up())
+    return (last_ts_robot_on_ground_flag and is_robot_up())
 
 
 def can_plot_rewards(current_epoch) -> bool:
@@ -334,6 +334,12 @@ rewards_data_plot = []
 def get_reward(past_position, new_position, forces_applied, epoch):
     timestep_reward = 0
 
+    robot_fell_penalty = -15 if robot_fell() else 0
+    robot_recovered_reward = 20 if recovered_from_fall() else 0
+
+    timestep_reward += robot_fell_penalty
+    timestep_reward += robot_recovered_reward
+
     if is_robot_up():
         update_last_ts_robot_on_ground_flag(False)
     elif is_robot_on_ground():
@@ -350,12 +356,6 @@ def get_reward(past_position, new_position, forces_applied, epoch):
     if not global_robot_fell_state:
         speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
     timestep_reward += speed
-
-    robot_fell_penalty = -15 if robot_fell() else 0
-    robot_recovered_reward = 20 if recovered_from_fall() else 0
-
-    timestep_reward += robot_fell_penalty
-    timestep_reward += robot_recovered_reward
 
     robot_on_ground_continuous_penalty = -0.5 if global_robot_fell_state else 0.5
 
