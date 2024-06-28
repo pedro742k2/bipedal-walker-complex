@@ -348,13 +348,18 @@ def get_reward(past_position, new_position, forces_applied, epoch):
 
     global_robot_fell_state = get_robot_fell_state()
 
-    force_penalty = 0 - (np.array(forces_applied)/MAX_TORQUE_FORCE).mean()
+    force_penalty = 0
+    if not global_robot_fell_state:
+        force_penalty = 0 - (np.array(forces_applied)/MAX_TORQUE_FORCE).mean()
     timestep_reward += force_penalty
 
     (x_speed, y_speed, _), _ = p.getBaseVelocity(robot_id)
+
     speed = 0
-    if not global_robot_fell_state:
-        speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
+    if global_robot_fell_state:
+        speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-2
+    elif not global_robot_fell_state:
+        speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
     timestep_reward += speed
 
     robot_on_ground_continuous_penalty = -0.5 if global_robot_fell_state else 0.5
@@ -373,7 +378,7 @@ def get_reward(past_position, new_position, forces_applied, epoch):
     foot_contact_readings = get_contact_sensor_values()
     # If both feet touching the ground, receive a reward
     if not global_robot_fell_state and foot_contact_readings[0] and foot_contact_readings[1]:
-        both_feet_touching_ground_reward = 0.5
+        both_feet_touching_ground_reward = 0.1
 
     timestep_reward += both_feet_touching_ground_reward
 
@@ -382,6 +387,9 @@ def get_reward(past_position, new_position, forces_applied, epoch):
 
     relative_distance_from_target = 0
 
+    if global_robot_fell_state:
+        relative_distance_from_target = get_distance_from_target_diff(
+            past_position, new_position) * 1e-1
     if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
             past_position, new_position) * 1e2
