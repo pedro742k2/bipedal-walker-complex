@@ -35,8 +35,8 @@ class Agent:
 
         self.runtest_folder_name = runtest_folder_name
 
-        self.log_file_alpha = open(
-            f"{self.runtest_folder_name}/logs/alpha.log", "w")
+        # self.log_file_alpha = open(
+        #     f"{self.runtest_folder_name}/logs/alpha.log", "w")
 
         self.start_steps = start_steps
         self.step_counter = 0
@@ -94,8 +94,8 @@ class Agent:
         # MSE loss function
         self.mse_loss = nn.MSELoss()
 
-        self.test_log_file = open(
-            f"{runtest_folder_name}/logs/losses.log", "w")
+        # self.test_log_file = open(
+        #     f"{runtest_folder_name}/logs/losses.log", "w")
 
         self.update_target_parameters(tau=1)
 
@@ -216,12 +216,12 @@ class Agent:
         q3_loss.backward()
         self.critic_3.optimizer.step()
 
-        with T.no_grad():
-            # self.test_log_file.write(
-            #    f"\nReward batch mean: {reward_batch.mean()}\n")
-            # self.test_log_file.write(f"TARGET Q: {targets.mean()}\n")
-            self.test_log_file.write(f"Q1 value: {q1_values.mean()}\n")
-            self.test_log_file.write(f"Q1 loss: {q1_loss}\n")
+        # with T.no_grad():
+        #     # self.test_log_file.write(
+        #     #    f"\nReward batch mean: {reward_batch.mean()}\n")
+        #     # self.test_log_file.write(f"TARGET Q: {targets.mean()}\n")
+        #     self.test_log_file.write(f"Q1 value: {q1_values.mean()}\n")
+        #     self.test_log_file.write(f"Q1 loss: {q1_loss}\n")
 
         # Update actor network
         if self.step_counter % 2 == 0:
@@ -241,10 +241,10 @@ class Agent:
             policy_loss = (self.alpha *
                            policy_action_logs - q_values).mean()
 
-            with T.no_grad():
-                self.test_log_file.write(
-                    f"ACTOR LOSS: {policy_loss.mean()}\n")
-                self.test_log_file.write("-"*50)
+            # with T.no_grad():
+            #     self.test_log_file.write(
+            #         f"ACTOR LOSS: {policy_loss.mean()}\n")
+            #     self.test_log_file.write("-"*50)
 
             self.actor.optimizer.zero_grad()
             policy_loss.backward()
@@ -262,11 +262,11 @@ class Agent:
         self.alpha_optim.step()
 
         self.alpha = self.log_alpha.exp()       # For logs
-        alpha_tlogs = self.alpha.clone()        # For logs
+        # alpha_tlogs = self.alpha.clone()        # For logs
 
         # self.log_file_alpha.write(str(alpha_tlogs) + "\n")
-        self.log_file_alpha.write(
-            f"Alpha: {alpha_tlogs} | Loss: {alpha_loss.clone()}\n")
+        # self.log_file_alpha.write(
+        #     f"Alpha: {alpha_tlogs} | Loss: {alpha_loss.clone()}\n")
 
         self.update_target_parameters()
         self.step_counter += 1

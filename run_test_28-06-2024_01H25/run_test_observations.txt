@@ -1,1 +1,0 @@
-distance travelled and speed a little bit rewarded if on ground and force penalty not given if robot on ground

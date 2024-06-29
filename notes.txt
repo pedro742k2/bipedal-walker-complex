@@ -1,0 +1,9 @@
+main_v2 state space doesn't include:
+    - joint 3D position and 4D orientation
+    - get_relative_distance_from_target is now -> euclidean_distance
+
+Added center of mass to state
+
+Added previous action
+
+Removed force applied from reward function
