@@ -390,7 +390,7 @@ def get_reward(past_position, new_position, epoch):
     speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
     timestep_reward += speed
 
-    robot_on_ground_continuous_penalty = -1 if global_robot_fell_state else 1
+    robot_on_ground_continuous_penalty = -1 if global_robot_fell_state else 0.25
 
     timestep_reward += robot_on_ground_continuous_penalty
 
