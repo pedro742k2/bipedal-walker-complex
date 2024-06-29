@@ -1,0 +1,1 @@
+Foot touching down reward decreased from 0.5 to 0.1 and distance travelled to target considered a little bit even if on ground

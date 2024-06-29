@@ -1,2 +1,3 @@
 main_v3_static_torque
 TIMESTEPS SET TO 2000
+FORCE SET TO 750

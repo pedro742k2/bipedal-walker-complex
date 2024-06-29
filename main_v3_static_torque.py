@@ -329,7 +329,7 @@ def is_robot_up() -> bool:
 
 def is_robot_on_ground() -> bool:
     (_, _, base_height), _ = p.getBasePositionAndOrientation(robot_id)
-    return base_height < 0.4
+    return base_height < 0.5
 
 
 def robot_fell():
@@ -383,11 +383,11 @@ def get_reward(past_position, new_position, epoch):
 
     (x_speed, y_speed, _), _ = p.getBaseVelocity(robot_id)
 
-    # speed = 0
-    # if global_robot_fell_state:
-    #     speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-2
-    # elif not global_robot_fell_state:
-    speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
+    speed = 0
+    if global_robot_fell_state:
+        speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-2
+    elif not global_robot_fell_state:
+        speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
     timestep_reward += speed
 
     robot_on_ground_continuous_penalty = -1 if global_robot_fell_state else 0.25
@@ -406,7 +406,7 @@ def get_reward(past_position, new_position, epoch):
     foot_contact_readings = get_contact_sensor_values()
     # If both feet touching the ground, receive a reward
     if not global_robot_fell_state and foot_contact_readings[0] and foot_contact_readings[1]:
-        both_feet_touching_ground_reward = 0.5
+        both_feet_touching_ground_reward = 0.1
 
     timestep_reward += both_feet_touching_ground_reward
 
@@ -415,9 +415,12 @@ def get_reward(past_position, new_position, epoch):
 
     relative_distance_from_target = 0
 
+    if global_robot_fell_state:
+        relative_distance_from_target = get_distance_from_target_diff(
+            past_position, new_position)
     if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
-            past_position, new_position) * 1e2
+            past_position, new_position) * 1e3
 
     timestep_reward += relative_distance_from_target
 
@@ -511,8 +514,6 @@ for epoch in range(TOTAL_EPOCHS):
 
         if is_state_success():
             break
-
-    print("FIM")
 
     if can_plot_rewards(epoch):
         x = [i for i in range(len(rewards_data_plot))]
