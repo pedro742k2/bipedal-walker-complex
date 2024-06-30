@@ -224,31 +224,31 @@ class Agent:
         #     self.test_log_file.write(f"Q1 loss: {q1_loss}\n")
 
         # Update actor network
-        if self.step_counter % 2 == 0:
-            # Sample new actions and respective log prob. with reparam.
-            policy_actions, policy_action_logs = self.actor.sample_normal(
-                state_batch, reparameterize=True)
+        # if self.step_counter % 2 == 0:
+        # Sample new actions and respective log prob. with reparam.
+        policy_actions, policy_action_logs = self.actor.sample_normal(
+            state_batch, reparameterize=True)
 
-            q1 = self.critic_1.forward(state_batch, policy_actions)
-            q2 = self.critic_2.forward(state_batch, policy_actions)
-            q3 = self.critic_3.forward(state_batch, policy_actions)
+        q1 = self.critic_1.forward(state_batch, policy_actions)
+        q2 = self.critic_2.forward(state_batch, policy_actions)
+        q3 = self.critic_3.forward(state_batch, policy_actions)
 
-            cat_q = T.cat((q1, q2, q3), dim=1)
+        cat_q = T.cat((q1, q2, q3), dim=1)
 
-            q_values = T.min(cat_q, 1).values
+        q_values = T.min(cat_q, 1).values
 
-            # Get policy loss
-            policy_loss = (self.alpha *
-                           policy_action_logs - q_values).mean()
+        # Get policy loss
+        policy_loss = (self.alpha *
+                       policy_action_logs - q_values).mean()
 
-            # with T.no_grad():
-            #     self.test_log_file.write(
-            #         f"ACTOR LOSS: {policy_loss.mean()}\n")
-            #     self.test_log_file.write("-"*50)
+        # with T.no_grad():
+        #     self.test_log_file.write(
+        #         f"ACTOR LOSS: {policy_loss.mean()}\n")
+        #     self.test_log_file.write("-"*50)
 
-            self.actor.optimizer.zero_grad()
-            policy_loss.backward()
-            self.actor.optimizer.step()
+        self.actor.optimizer.zero_grad()
+        policy_loss.backward()
+        self.actor.optimizer.step()
 
         # Update alpha network
         _, policy_action_logs = self.actor.sample_normal(

@@ -37,3 +37,11 @@ with open("logs/epochs.log", "r") as f:
     plt.ylabel("Score")
     plt.legend(["Scores average", "Scores"])
     plt.savefig(f"scores_{time.time()}.png")
+
+    plt.clf()
+
+    plt.figure(figsize=(12, 8), dpi=300)
+    plt.plot(x, avg_score_history)
+    plt.xlabel("Epoch")
+    plt.ylabel("Score")
+    plt.savefig(f"avg_scores_{time.time()}.png")

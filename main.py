@@ -392,7 +392,9 @@ def get_reward(past_position, new_position, forces_applied, epoch):
             past_position, new_position)
     if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
-            past_position, new_position) * 1e2
+            past_position, new_position) * 1e3
+
+    relative_distance_from_target = max(-0.2, relative_distance_from_target)
 
     timestep_reward += relative_distance_from_target
 
