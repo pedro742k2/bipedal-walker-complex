@@ -160,6 +160,7 @@ def reset_env():
         robot_id, cubeStartPos, cubeStartOrientation)
     for i in range(num_joints):
         p.resetJointState(robot_id, i, targetValue=0, targetVelocity=0)
+    last_action = [0 for _ in range(ACTION_SPACE_DIM)]
     update_last_ts_robot_on_ground_flag(False)
 
 
@@ -356,7 +357,7 @@ rewards_data_plot = []
 def get_reward(past_position, new_position, epoch):
     timestep_reward = 0
 
-    robot_fell_penalty = -15 if robot_fell() else 0
+    robot_fell_penalty = -100 if robot_fell() else 0
     robot_recovered_reward = 20 if recovered_from_fall() else 0
 
     timestep_reward += robot_fell_penalty
@@ -420,7 +421,7 @@ def get_reward(past_position, new_position, epoch):
             past_position, new_position)
     if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
-            past_position, new_position) * 1e3
+            past_position, new_position) * 1e1
 
     relative_distance_from_target = max(-0.2, relative_distance_from_target)
 
@@ -500,21 +501,21 @@ for epoch in range(TOTAL_EPOCHS):
         # Get new robot positions
         new_position, _ = p.getBasePositionAndOrientation(robot_id)
 
+        # Check if epoch truncated
+        terminal_flag = robot_fell() or is_state_truncated(timestep)
+
         # Get timestep reward
         reward = get_reward(position, new_position, epoch)
 
         # Add reward to epoch accumulated score
         epoch_acc_score += reward
 
-        # Check if epoch truncated
-        terminal_flag = robot_fell()
-
         agent.remember(current_observation, actions, reward,
                        new_observation, terminal_flag)
 
         agent.learn()
 
-        if is_state_success():
+        if is_state_success() or terminal_flag:
             break
 
     if can_plot_rewards(epoch):
