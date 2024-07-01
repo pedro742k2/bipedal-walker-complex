@@ -1,0 +1,1 @@
+Robot terminal state when falls
