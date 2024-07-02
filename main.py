@@ -359,10 +359,10 @@ def get_reward(past_position, new_position, forces_applied, epoch):
     if global_robot_fell_state:
         speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-4
     elif not global_robot_fell_state:
-        speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
+        speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-3
     timestep_reward += speed
 
-    robot_on_ground_continuous_penalty = -0.5 if global_robot_fell_state else 0.5
+    robot_on_ground_continuous_penalty = -0.5 if global_robot_fell_state else 0.25
 
     timestep_reward += robot_on_ground_continuous_penalty
 
@@ -387,9 +387,9 @@ def get_reward(past_position, new_position, forces_applied, epoch):
 
     relative_distance_from_target = 0
 
-    if global_robot_fell_state:
-        relative_distance_from_target = get_distance_from_target_diff(
-            past_position, new_position)
+    # if global_robot_fell_state:
+    #     relative_distance_from_target = get_distance_from_target_diff(
+    #         past_position, new_position)
     if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
             past_position, new_position) * 1e3

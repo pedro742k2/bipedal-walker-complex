@@ -354,10 +354,19 @@ def making_progress_towards_getting_up(past_position, new_position):
 rewards_data_plot = []
 
 
+def get_robot_height():
+    (_, _, base_height), _ = p.getBasePositionAndOrientation(robot_id)
+    return base_height
+
+
 def get_reward(past_position, new_position, epoch):
+
     timestep_reward = 0
 
-    robot_fell_penalty = -100 if robot_fell() else 0
+    # Rewarded for keeping base high
+    timestep_reward += get_robot_height()-0.5
+
+    robot_fell_penalty = -300 if robot_fell() else 0
     robot_recovered_reward = 20 if recovered_from_fall() else 0
 
     timestep_reward += robot_fell_penalty
@@ -384,11 +393,11 @@ def get_reward(past_position, new_position, epoch):
 
     (x_speed, y_speed, _), _ = p.getBaseVelocity(robot_id)
 
-    speed = 0
-    if global_robot_fell_state:
-        speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
-    elif not global_robot_fell_state:
-        speed = np.sqrt(np.square(x_speed)+np.square(y_speed))
+    # speed = 0
+    # if global_robot_fell_state:
+    #     speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
+    # elif not global_robot_fell_state:
+    speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-2
     timestep_reward += speed
 
     robot_on_ground_continuous_penalty = -1 if global_robot_fell_state else 0.25
@@ -407,7 +416,7 @@ def get_reward(past_position, new_position, epoch):
     foot_contact_readings = get_contact_sensor_values()
     # If both feet touching the ground, receive a reward
     if not global_robot_fell_state and foot_contact_readings[0] and foot_contact_readings[1]:
-        both_feet_touching_ground_reward = 0.25
+        both_feet_touching_ground_reward = 0.1
 
     timestep_reward += both_feet_touching_ground_reward
 
@@ -421,7 +430,7 @@ def get_reward(past_position, new_position, epoch):
             past_position, new_position)
     if not global_robot_fell_state:
         relative_distance_from_target = get_distance_from_target_diff(
-            past_position, new_position) * 1e1
+            past_position, new_position) * 1e3
 
     relative_distance_from_target = max(-0.2, relative_distance_from_target)
 
