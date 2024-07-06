@@ -33,9 +33,9 @@ with open("logs/epochs.log", "r") as f:
     plt.xlim(left=-30, right=30)
     plt.ylim(bottom=-30, top=30)
 
-    plt.hlines([0, 10, 20], xmin=[-30, -30, -30],
-               xmax=[0, 10, 20], linestyles="dashed", colors="black")
-    plt.vlines([0, 10, 20], ymin=[-30, -30, -30], ymax=[0, 10, 20],
+    plt.hlines([0, 5, 10, 15, 20], xmin=[-30, -30, -30, -30, -30],
+               xmax=[0, 5, 10, 15, 20], linestyles="dashed", colors="black")
+    plt.vlines([0, 5, 10, 15, 20], ymin=[-30, -30, -30, -30, -30], ymax=[0, 5, 10, 15, 20],
                linestyles="dashed", colors="black")
 
     plt.scatter(x, y, color="blue")
