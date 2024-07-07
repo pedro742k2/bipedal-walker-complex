@@ -1,14 +1,21 @@
 import time
 from matplotlib import pyplot as plt
+import os
 import numpy as np
+
+folder_name = "generated_plots"
+
+if not os.path.isdir(folder_name):
+    os.mkdir(folder_name)
 
 coords = []
 
-# def euclidean_distance(point1, point2):
-#     return np.linalg.norm(np.array(point1) - np.array(point2))
-
-
 TARGET_POSITION = [20, 20]
+
+
+def euclidean_distance(point1, point2):
+    return np.linalg.norm(np.array(point1) - np.array(point2))
+
 
 with open("logs/epochs.log", "r") as f:
     lines = f.readlines()
@@ -45,4 +52,14 @@ with open("logs/epochs.log", "r") as f:
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.legend(["", "", "Reached coords", "Target coords", "origin"])
-    plt.savefig(f"distances_{time.time()}.png")
+    plt.savefig(f"{folder_name}/distances_reached_{time.time()}.png")
+
+    plt.clf()
+
+    x = [i for i in range(len(coords))]
+    y = [euclidean_distance(p, TARGET_POSITION) for p in coords]
+
+    plt.scatter(x, y)
+    plt.xlabel("Epoch")
+    plt.ylabel("Distance from target")
+    plt.savefig(f"{folder_name}/distances_plot_{time.time()}.png")

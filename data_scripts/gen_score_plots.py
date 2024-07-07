@@ -1,9 +1,16 @@
 import time
 import matplotlib.pyplot as plt
-import numpy as np
+import os
 
 avg_score_history = []
 score_history = []
+
+
+folder_name = "generated_plots"
+
+if not os.path.isdir(folder_name):
+    os.mkdir(folder_name)
+
 
 with open("logs/epochs.log", "r") as f:
     lines = f.readlines()
@@ -36,7 +43,7 @@ with open("logs/epochs.log", "r") as f:
     plt.xlabel("Epoch")
     plt.ylabel("Score")
     plt.legend(["Scores average", "Scores"])
-    plt.savefig(f"scores_{time.time()}.png")
+    plt.savefig(f"{folder_name}/scores_{time.time()}.png")
 
     plt.clf()
 
@@ -44,4 +51,4 @@ with open("logs/epochs.log", "r") as f:
     plt.plot(x, avg_score_history)
     plt.xlabel("Epoch")
     plt.ylabel("Score")
-    plt.savefig(f"avg_scores_{time.time()}.png")
+    plt.savefig(f"{folder_name}/avg_scores_{time.time()}.png")
