@@ -52,14 +52,15 @@ with open("logs/epochs.log", "r") as f:
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.legend(["", "", "Reached coords", "Target coords", "origin"])
-    plt.savefig(f"{folder_name}/distances_reached_{time.time()}.png")
+    plt.savefig(f"{folder_name}/coords_reached_{time.time()}.png")
 
     plt.clf()
 
     x = [i for i in range(len(coords))]
     y = [euclidean_distance(p, TARGET_POSITION) for p in coords]
 
-    plt.scatter(x, y)
+    plt.plot(x, y)
+    plt.ylim(bottom=0)
     plt.xlabel("Epoch")
     plt.ylabel("Distance from target")
-    plt.savefig(f"{folder_name}/distances_plot_{time.time()}.png")
+    plt.savefig(f"{folder_name}/euclidian_distances_plot_{time.time()}.png")
