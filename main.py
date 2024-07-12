@@ -291,7 +291,8 @@ def get_current_observation():
 
 
 def is_robot_on_ground():
-    return len(p.getContactPoints(robot_id, plane_id, linkIndexA=-1)) > 0
+    return get_robot_height() < 0.4
+    # return len(p.getContactPoints(robot_id, plane_id, linkIndexA=-1)) > 0
 
 
 def can_plot_rewards(current_epoch) -> bool:
@@ -313,7 +314,7 @@ def get_reward(past_position, new_position, epoch):
     robot_height_reward = get_robot_height()-0.5
     timestep_reward += robot_height_reward
 
-    robot_fell_penalty = -300 if is_robot_on_ground() else 0
+    robot_fell_penalty = -300 if is_robot_on_ground() else 0.5
     # robot_recovered_reward = 20 if recovered_from_fall() else 0
 
     timestep_reward += robot_fell_penalty
@@ -325,7 +326,7 @@ def get_reward(past_position, new_position, epoch):
     # if global_robot_fell_state:
     #     speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
     # elif not global_robot_fell_state:
-    speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-2
+    speed = np.sqrt(np.square(x_speed)+np.square(y_speed)) * 1e-1
     timestep_reward += speed
 
     both_feet_touching_ground_reward = 0

@@ -52,15 +52,32 @@ with open("logs/epochs.log", "r") as f:
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.legend(["", "", "Reached coords", "Target coords", "origin"])
-    plt.savefig(f"{folder_name}/coords_reached_{time.time()}.png")
+    plt.savefig(f"{folder_name}/distances_reached_{time.time()}.png")
 
     plt.clf()
 
+    # x = [i for i in range(len(coords))]
+    # euclidean_distances_array = [euclidean_distance(
+    #     p, TARGET_POSITION) for p in coords]
+    # y = euclidean_distances_array
+
+    # plt.scatter(x, y)
+    # plt.xlabel("Epoch")
+    # plt.ylabel("Distance from target")
+    # plt.savefig(f"{folder_name}/distances_plot_{time.time()}.png")
+
+    # plt.clf()
+
+    euclidean_distances_array = [euclidean_distance(
+        p, TARGET_POSITION) for p in coords]
+
     x = [i for i in range(len(coords))]
-    y = [euclidean_distance(p, TARGET_POSITION) for p in coords]
+    y = [np.mean(euclidean_distances_array[i-100:i] if i > 100 else np.mean(euclidean_distances_array[:i]))
+         for i in range(len(euclidean_distances_array))]
 
     plt.plot(x, y)
-    plt.ylim(bottom=0)
+    plt.scatter(x, euclidean_distances_array, color="orange")
     plt.xlabel("Epoch")
-    plt.ylabel("Distance from target")
-    plt.savefig(f"{folder_name}/euclidian_distances_plot_{time.time()}.png")
+    plt.ylabel("Mean distance from target")
+    plt.legend(["Mean distance from target", "Distance from target"])
+    plt.savefig(f"{folder_name}/distances_plot_{time.time()}.png")
